@@ -1,0 +1,198 @@
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>Excercice2</title>
+    <meta name="description" content="The HTML5 Herald">
+    <meta name="author" content="SitePoint">
+
+    <link rel="stylesheet" href="styles2.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="JsBarcode.code128.min.js"></script>
+
+</head>
+
+<body>
+    <div id="container">
+        <div id="main">
+            <div class="block">
+
+                <form id="saveForm">
+                    <label> Select your Country</label>
+                    <select name="country" id="countryselect">
+                        <option value="FI">Finland</option>
+                        <option value="SE">Sweden</option>
+                        <option value="FR">France</option>
+                        <option value="DE">Germany</option>
+
+                    </select>
+            </div>
+            <div class="history" id="history">
+
+
+
+            </div>
+            <div class="block">
+                <label>Zip</label>
+                <input type="text" id="zip" />
+
+            </div>
+
+            <div class="block">
+                <input type="button" id="search" value="search" onclick="networking()">
+            </div>
+            </form>
+            <div class="block" id="showData">
+            </div>
+            <div class="block" id="showMap" style="width:90%;height:300px;">
+            </div>
+        </div>
+    </div>
+
+
+
+</body>
+
+<script>
+
+    var long = [];
+    var lat = [];
+    var LatLngNew;
+
+    // please make not that some values of the longitude or the latitude of the api are wrong.
+
+    function networking() {
+        var requestBaseUrl = "http://api.zippopotam.us/";
+        var selectoption = document.getElementById("countryselect");
+        var requestCountryUrl = selectoption.options[selectoption.selectedIndex].value;
+        var requestZipcode = document.getElementById("zip").value;
+        document.cookie = "username=" + requestZipcode;
+        var x = document.cookie;
+        console.log(x);
+
+        var requestUrl = requestBaseUrl + requestCountryUrl + "/" + requestZipcode;
+        console.log(requestUrl);
+        var request = new XMLHttpRequest();
+        request.open('GET', requestUrl);
+        request.responseType = 'json';
+        request.send();
+
+
+        request.onload = function () {
+            var superHeroes = request.response;
+            //console.log(superHeroes)
+            populateHeader(superHeroes);
+
+            var table1 = document.createElement("table");
+            var th1 = document.createElement("th");
+            th1.innerHTML = x.value;
+
+
+        }
+        if (typeof (Storage) !== "undefined") {
+            if (localStorage.clickcount) {
+                localStorage.clickcount = requestZipcode;
+                localStorage.items = requestCountryUrl;
+                var list = document.createElement('ul');
+
+                var item = document.createElement('li');
+
+                // Set its contents:
+                item.appendChild(document.createTextNode(localStorage.clickcount));
+                item.appendChild(document.createTextNode(localStorage.items));
+
+
+                // Add it to the list:
+                list.appendChild(item);
+                document.getElementById("history").appendChild(list);
+            } else {
+                localStorage.clickcount = 1;
+            }
+
+        } else {
+            document.getElementById("history").innerHTML = "Sorry, your browser does not support web storage...";
+        }
+
+
+
+        init();
+
+
+
+
+    }
+
+
+
+    function populateHeader(jsonObj) {
+
+        var col = [];
+        var places = jsonObj['places'];
+        for (var i = 0; i < places.length; i++) {
+            long.push(places[i].longitude);
+            lat.push(places[i].latitude);
+            LatLngNew = new google.maps.LatLng(places[i].latitude, places[i].longitude);
+            for (var key in places[i]) {
+                if (col.indexOf(key) === -1) {
+                    col.push(key);
+                }
+            }
+        }
+
+        var table = document.createElement("table");
+
+        // CREATE HTML TABLE HEADER ROW USING THE EXTRACTED HEADERS ABOVE.
+
+        var tr = table.insertRow(-1);                   // TABLE ROW.
+
+        for (var i = 0; i < col.length; i++) {
+            var th = document.createElement("th");      // TABLE HEADER.
+            th.innerHTML = col[i];
+            tr.appendChild(th);
+        }
+
+        // ADD JSON DATA TO THE TABLE AS ROWS.
+        for (var i = 0; i < places.length; i++) {
+
+            tr = table.insertRow(-1);
+
+            for (var j = 0; j < col.length; j++) {
+                var tabCell = tr.insertCell(-1);
+                tabCell.innerHTML = places[i][col[j]];
+
+            }
+        }
+
+        // FINALLY ADD THE NEWLY CREATED TABLE WITH JSON DATA TO A CONTAINER.
+        var divContainer = document.getElementById("showData");
+        divContainer.innerHTML = "";
+        divContainer.appendChild(table);
+
+        init();
+    }
+
+    function init() {
+        var latlng = new google.maps.LatLng(52.5, 14.612);
+
+        var myOptions = {
+            zoom: 4,
+            center: latlng,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+
+        var map = new google.maps.Map(document.getElementById("showMap"), myOptions);
+
+        for (var i = 0; i < long.length; i++) {
+            var marker = new google.maps.Marker({
+                position: new google.maps.LatLng(lat[i], long[i]),
+                map: map,
+
+            });
+        }
+    }
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAvOehUIyfkA2x2mRyw7huDo2sovcD6wXE&callback=init">
+</script>
+
+</html>
